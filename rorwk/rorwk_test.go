@@ -113,16 +113,11 @@ func TestHashAPI32WithKey(t *testing.T) {
 		require.Equal(t, expected, actual)
 	})
 
-	t.Run("module name-unicode", func(t *testing.T) {
-		var modName string
-		for _, r := range "kernel32.dll" {
-			modName += string(r)
-			modName += "\x00"
-		}
-		mHash, pHash, err := HashAPI32WithKey(modName, "WinExec", key)
+	t.Run("module name-UTF16", func(t *testing.T) {
+		mHash, pHash, err := HashAPI32WithKey("测试.dll", "WinExec", key)
 		require.NoError(t, err)
 
-		expected := uint32(0x42509A1C)
+		expected := uint32(0x3160B9AD)
 		actual := binary.LittleEndian.Uint32(mHash)
 		require.Equal(t, expected, actual)
 
@@ -156,16 +151,11 @@ func TestHashAPI64WithKey(t *testing.T) {
 		require.Equal(t, expected, actual)
 	})
 
-	t.Run("module name-unicode", func(t *testing.T) {
-		var modName string
-		for _, r := range "kernel32.dll" {
-			modName += string(r)
-			modName += "\x00"
-		}
-		mHash, pHash, err := HashAPI64WithKey(modName, "WinExec", key)
+	t.Run("module name-UTF16", func(t *testing.T) {
+		mHash, pHash, err := HashAPI64WithKey("测试.dll", "WinExec", key)
 		require.NoError(t, err)
 
-		expected := uint64(0x2A5175AD1A0CECBC)
+		expected := uint64(0x635DE9A89022CB4C)
 		actual := binary.LittleEndian.Uint64(mHash)
 		require.Equal(t, expected, actual)
 
