@@ -4,8 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
-	"strings"
-	"unicode"
+	"unicode/utf16"
 
 	"github.com/pkg/errors"
 )
@@ -67,21 +66,21 @@ func HashAPI32WithKey(module, procedure string, key []byte) ([]byte, []byte, err
 		keyHash += uint32(b)
 	}
 	modHash = seedHash
-	if isASCII(module) {
-		modName := toUnicode(module)
-		for _, c := range modName {
-			modHash = ror32(modHash, rorMod)
-			modHash += uint32(c)
+	for _, c := range utf16.Encode([]rune(module)) {
+		buf := make([]byte, 2)
+		binary.LittleEndian.PutUint16(buf, c)
+		b0 := buf[0]
+		b1 := buf[1]
+		if b0 >= 'a' {
+			b0 -= 0x20
 		}
-	} else {
-		modName := []byte(module)
-		for _, c := range modName {
-			if c >= 'a' {
-				c -= 0x20
-			}
-			modHash = ror32(modHash, rorMod)
-			modHash += uint32(c)
+		if b1 >= 'a' {
+			b1 -= 0x20
 		}
+		modHash = ror32(modHash, rorMod)
+		modHash += uint32(b0)
+		modHash = ror32(modHash, rorMod)
+		modHash += uint32(b1)
 	}
 	modHash += seedHash + keyHash
 	procHash = seedHash
@@ -126,21 +125,21 @@ func HashAPI64WithKey(module, procedure string, key []byte) ([]byte, []byte, err
 		keyHash += uint64(b)
 	}
 	modHash = seedHash
-	if isASCII(module) {
-		modName := toUnicode(module)
-		for _, c := range modName {
-			modHash = ror64(modHash, rorMod)
-			modHash += uint64(c)
+	for _, c := range utf16.Encode([]rune(module)) {
+		buf := make([]byte, 2)
+		binary.LittleEndian.PutUint16(buf, c)
+		b0 := buf[0]
+		b1 := buf[1]
+		if b0 >= 'a' {
+			b0 -= 0x20
 		}
-	} else {
-		modName := []byte(module)
-		for _, c := range modName {
-			if c >= 'a' {
-				c -= 0x20
-			}
-			modHash = ror64(modHash, rorMod)
-			modHash += uint64(c)
+		if b1 >= 'a' {
+			b1 -= 0x20
 		}
+		modHash = ror64(modHash, rorMod)
+		modHash += uint64(b0)
+		modHash = ror64(modHash, rorMod)
+		modHash += uint64(b1)
 	}
 	modHash += seedHash + keyHash
 	procHash = seedHash
@@ -177,25 +176,6 @@ func generateKey() ([]byte, error) {
 	}
 	hash := sha256.Sum256(key)
 	return hash[:], nil
-}
-
-func isASCII(s string) bool {
-	for _, r := range s {
-		if r > unicode.MaxASCII || r == 0x00 {
-			return false
-		}
-	}
-	return true
-}
-
-func toUnicode(s string) string {
-	u := strings.Builder{}
-	u.Grow(len(s) * 2)
-	for _, r := range strings.ToUpper(s) {
-		u.WriteRune(r)
-		u.WriteByte(0x00)
-	}
-	return u.String()
 }
 
 func ror32(value, bits uint32) uint32 {
